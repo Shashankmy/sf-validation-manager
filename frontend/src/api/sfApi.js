@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://sf-validation-manager-7fce.onrender.com',
   withCredentials: true,   // needed so session cookies are sent along
   headers: {
     'Content-Type': 'application/json',

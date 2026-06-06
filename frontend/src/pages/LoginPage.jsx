@@ -14,7 +14,7 @@ function LoginPage({ authStatus }) {
 
   const handleLogin = () => {
     // redirect to django backend which then redirects to salesforce
-    window.location.href = 'http://localhost:8000/auth/login/'
+    window.location.href = 'https://sf-validation-manager-7fce.onrender.com/auth/login/'
   }
 
   // check for error param in url (e.g after failed oauth)
