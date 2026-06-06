@@ -22,8 +22,6 @@ Built as part of an assignment for CloudVandana.
 
 ## Project Structure
 
-## Project Structure
-
     sf-validation-manager/
     ├── backend/
     │   ├── sfauth/        # handles oauth login, callback, logout
