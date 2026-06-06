@@ -105,3 +105,5 @@ FRONTEND_URL=http://localhost:5173
 | GET | /api/rules/ | Fetches all Account validation rules |
 | POST | /api/rules/{id}/toggle/ | Toggles a single rule active/inactive |
 | POST | /api/rules/deploy/ | Deploys multiple rule changes at once |
+
+Used ChatGPT only to refine this README file.
