@@ -6,9 +6,12 @@ import json
 
 
 def get_session_tokens(request):
-    """helper to pull tokens out of session"""
-    access_token = request.session.get('access_token')
-    instance_url = request.session.get('instance_url')
+    """
+    Try headers first (sent by frontend via localStorage),
+    then fall back to session. Fixes cross domain cookie issue.
+    """
+    access_token = request.headers.get('X-SF-Access-Token') or request.session.get('access_token')
+    instance_url = request.headers.get('X-SF-Instance-URL') or request.session.get('instance_url')
     return access_token, instance_url
 
 
@@ -21,15 +24,10 @@ def not_authenticated():
 
 @require_http_methods(["GET"])
 def get_validation_rules(request):
-    """
-    Fetch all validation rules on Account object using Salesforce Tooling API.
-    Returns list of rules with their active/inactive status.
-    """
     access_token, instance_url = get_session_tokens(request)
     if not access_token:
         return not_authenticated()
 
-    # query tooling api for account validation rules
     query = (
         "SELECT Id, ValidationName, Active, Description, ErrorMessage "
         "FROM ValidationRule "
@@ -74,10 +72,6 @@ def get_validation_rules(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def toggle_rule(request, rule_id):
-    """
-    Toggle a single validation rule active/inactive.
-    Sends a PATCH request to the Tooling API to update just the Active field.
-    """
     access_token, instance_url = get_session_tokens(request)
     if not access_token:
         return not_authenticated()
@@ -86,11 +80,10 @@ def toggle_rule(request, rule_id):
         body = json.loads(request.body)
         new_status = body.get('active')
         if new_status is None:
-            return JsonResponse({'error': 'active field is required in request body'}, status=400)
+            return JsonResponse({'error': 'active field is required'}, status=400)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON in request body'}, status=400)
 
-    # first we need to fetch the full metadata for the rule before updating
     tooling_url = f"{instance_url}/services/data/v59.0/tooling/sobjects/ValidationRule/{rule_id}"
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -98,7 +91,6 @@ def toggle_rule(request, rule_id):
     }
 
     try:
-        # get current rule metadata
         get_resp = requests.get(tooling_url, headers=headers)
         if get_resp.status_code != 200:
             return JsonResponse(
@@ -108,17 +100,12 @@ def toggle_rule(request, rule_id):
 
         rule_data = get_resp.json()
         metadata = rule_data.get('Metadata', {})
-
-        # update the active status in metadata
         metadata['active'] = new_status
 
-        patch_payload = {'Metadata': metadata}
-
-        # send the update back
         patch_resp = requests.patch(
             tooling_url,
             headers=headers,
-            json=patch_payload
+            json={'Metadata': metadata}
         )
 
         if patch_resp.status_code == 204:
@@ -141,10 +128,6 @@ def toggle_rule(request, rule_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 def deploy_rules(request):
-    """
-    Deploy multiple rule changes at once.
-    Accepts a list of {id, active} objects and updates each one.
-    """
     access_token, instance_url = get_session_tokens(request)
     if not access_token:
         return not_authenticated()
@@ -153,7 +136,7 @@ def deploy_rules(request):
         body = json.loads(request.body)
         rule_updates = body.get('rules', [])
         if not rule_updates:
-            return JsonResponse({'error': 'No rules provided in request'}, status=400)
+            return JsonResponse({'error': 'No rules provided'}, status=400)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON body'}, status=400)
 
@@ -176,7 +159,6 @@ def deploy_rules(request):
         tooling_url = f"{instance_url}/services/data/v59.0/tooling/sobjects/ValidationRule/{rule_id}"
 
         try:
-            # fetch current metadata first
             get_resp = requests.get(tooling_url, headers=headers)
             if get_resp.status_code != 200:
                 errors.append({'id': rule_id, 'error': 'Could not fetch rule metadata'})
@@ -186,7 +168,6 @@ def deploy_rules(request):
             metadata = rule_data.get('Metadata', {})
             metadata['active'] = new_status
 
-            # patch the rule
             patch_resp = requests.patch(
                 tooling_url,
                 headers=headers,
@@ -194,16 +175,9 @@ def deploy_rules(request):
             )
 
             if patch_resp.status_code == 204:
-                results.append({
-                    'id': rule_id,
-                    'active': new_status,
-                    'status': 'updated'
-                })
+                results.append({'id': rule_id, 'active': new_status, 'status': 'updated'})
             else:
-                errors.append({
-                    'id': rule_id,
-                    'error': patch_resp.text
-                })
+                errors.append({'id': rule_id, 'error': patch_resp.text})
 
         except Exception as e:
             errors.append({'id': rule_id, 'error': str(e)})

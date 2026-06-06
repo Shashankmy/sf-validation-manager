@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   fetchValidationRules,
-  toggleValidationRule,
   deployRules,
   logoutUser
 } from '../api/sfApi'
@@ -16,7 +15,7 @@ function Dashboard({ authStatus, setAuthStatus }) {
   const [deploying, setDeploying] = useState(false)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
-  const [pendingChanges, setPendingChanges] = useState({}) // tracks unsaved toggles
+  const [pendingChanges, setPendingChanges] = useState({})
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg)
@@ -38,7 +37,7 @@ function Dashboard({ authStatus, setAuthStatus }) {
     } catch (err) {
       if (err.response?.status === 401) {
         showError('Session expired. Please login again.')
-        navigate('/')
+        handleLogout()
       } else {
         showError('Failed to fetch validation rules. Please try again.')
       }
@@ -52,11 +51,9 @@ function Dashboard({ authStatus, setAuthStatus }) {
   }, [])
 
   const handleToggle = (ruleId, newStatus) => {
-    // update local state immediately for responsive UI
     setRules(prev =>
       prev.map(r => r.id === ruleId ? { ...r, active: newStatus } : r)
     )
-    // track this as a pending change
     setPendingChanges(prev => ({ ...prev, [ruleId]: newStatus }))
   }
 
@@ -72,22 +69,15 @@ function Dashboard({ authStatus, setAuthStatus }) {
       showError('No changes to deploy. Toggle some rules first.')
       return
     }
-
     setDeploying(true)
     setError('')
     try {
-      const rulesPayload = Object.entries(pendingChanges).map(([id, active]) => ({
-        id,
-        active
-      }))
-
+      const rulesPayload = Object.entries(pendingChanges).map(([id, active]) => ({ id, active }))
       const res = await deployRules(rulesPayload)
       const data = res.data
-
       if (data.success) {
         showSuccess(`✓ Deployed successfully! ${data.message}`)
         setPendingChanges({})
-        // refresh rules from server to confirm
         await loadRules()
       } else {
         showError(`Deploy partially failed: ${data.message}`)
@@ -100,11 +90,11 @@ function Dashboard({ authStatus, setAuthStatus }) {
   }
 
   const handleLogout = async () => {
-    try {
-      await logoutUser()
-    } catch (e) {
-      // ignore errors on logout
-    }
+    try { await logoutUser() } catch (e) {}
+    localStorage.removeItem('sf_access_token')
+    localStorage.removeItem('sf_instance_url')
+    localStorage.removeItem('sf_user_name')
+    localStorage.removeItem('sf_user_email')
     setAuthStatus({ logged_in: false })
     navigate('/')
   }
@@ -115,38 +105,26 @@ function Dashboard({ authStatus, setAuthStatus }) {
 
   return (
     <div className={styles.wrapper}>
-      {/* top navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navLeft}>
           <span className={styles.navIcon}>☁</span>
           <span className={styles.navTitle}>SF Validation Manager</span>
         </div>
         <div className={styles.navRight}>
-          <span className={styles.userInfo}>
-            {authStatus.user_name || 'Salesforce User'}
-          </span>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            Logout
-          </button>
+          <span className={styles.userInfo}>{authStatus.user_name || 'Salesforce User'}</span>
+          <button className={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
       </nav>
 
       <div className={styles.container}>
-        {/* page heading */}
         <div className={styles.pageHeader}>
-          <div>
-            <h1 className={styles.pageTitle}>Account Validation Rules</h1>
-            <p className={styles.pageSubtitle}>
-              View, toggle, and deploy validation rules for the Account object
-            </p>
-          </div>
+          <h1 className={styles.pageTitle}>Account Validation Rules</h1>
+          <p className={styles.pageSubtitle}>View, toggle, and deploy validation rules for the Account object</p>
         </div>
 
-        {/* status messages */}
         {error && <div className={styles.errorAlert}>{error}</div>}
         {successMsg && <div className={styles.successAlert}>{successMsg}</div>}
 
-        {/* stats row */}
         <div className={styles.statsRow}>
           <div className={styles.statCard}>
             <span className={styles.statNum}>{rules.length}</span>
@@ -168,28 +146,15 @@ function Dashboard({ authStatus, setAuthStatus }) {
           )}
         </div>
 
-        {/* action buttons */}
         <div className={styles.actionsBar}>
           <div className={styles.leftActions}>
-            <button
-              className={styles.btnPrimary}
-              onClick={loadRules}
-              disabled={loading}
-            >
+            <button className={styles.btnPrimary} onClick={loadRules} disabled={loading}>
               {loading ? 'Loading...' : '↻ Fetch Rules'}
             </button>
-            <button
-              className={styles.btnSuccess}
-              onClick={() => handleToggleAll(true)}
-              disabled={loading || rules.length === 0}
-            >
+            <button className={styles.btnSuccess} onClick={() => handleToggleAll(true)} disabled={loading || rules.length === 0}>
               Enable All
             </button>
-            <button
-              className={styles.btnDanger}
-              onClick={() => handleToggleAll(false)}
-              disabled={loading || rules.length === 0}
-            >
+            <button className={styles.btnDanger} onClick={() => handleToggleAll(false)} disabled={loading || rules.length === 0}>
               Disable All
             </button>
           </div>
@@ -202,20 +167,9 @@ function Dashboard({ authStatus, setAuthStatus }) {
           </button>
         </div>
 
-        {/* rules list */}
         <div className={styles.rulesSection}>
-          {loading && (
-            <div className={styles.loadingState}>
-              <p>Fetching validation rules from Salesforce...</p>
-            </div>
-          )}
-
-          {!loading && rules.length === 0 && (
-            <div className={styles.emptyState}>
-              <p>No validation rules found. Click "Fetch Rules" to load them.</p>
-            </div>
-          )}
-
+          {loading && <div className={styles.loadingState}><p>Fetching validation rules from Salesforce...</p></div>}
+          {!loading && rules.length === 0 && <div className={styles.emptyState}><p>No validation rules found. Click "Fetch Rules" to load them.</p></div>}
           {!loading && rules.length > 0 && (
             <div className={styles.rulesList}>
               {rules.map(rule => (

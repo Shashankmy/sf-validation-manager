@@ -6,4 +6,5 @@ urlpatterns = [
     path('callback/', views.callback, name='sf_callback'),
     path('logout/', views.logout, name='sf_logout'),
     path('status/', views.user_status, name='user_status'),
+    path('token-login/', views.token_login, name='token_login'),
 ]
