@@ -74,9 +74,9 @@ The app will be available at:
 Create a `.env` file in the `backend/` directory:
 
 ```
-SF_CLIENT_ID=your_consumer_key
-SF_CLIENT_SECRET=your_consumer_secret
-SF_DOMAIN=https://yourorg.my.salesforce.com
+SF_CLIENT_ID=consumer_key
+SF_CLIENT_SECRET=consumer_secret
+SF_DOMAIN=https://org.my.salesforce.com
 REDIRECT_URI=http://localhost:8000/auth/callback/
 SECRET_KEY=your_django_secret_key
 DEBUG=True
