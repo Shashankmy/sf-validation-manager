@@ -22,20 +22,22 @@ Built as part of an assignment for CloudVandana.
 
 ## Project Structure
 
-sf-validation-manager/
-├── backend/
-│   ├── sfauth/        # handles oauth login, callback, logout
-│   ├── rules/         # fetching, toggling and deploying rules
-│   ├── sfmanager/     # django settings and main urls
-│   ├── manage.py
-│   └── requirements.txt
-└── frontend/
-├── src/
-│   ├── api/         # axios calls to backend
-│   ├── components/  # RuleCard component
-│   └── pages/       # LoginPage and Dashboard
-└── package.json
+## Project Structure
 
+    sf-validation-manager/
+    ├── backend/
+    │   ├── sfauth/        # handles oauth login, callback, logout
+    │   ├── rules/         # fetching, toggling and deploying rules
+    │   ├── sfmanager/     # django settings and main urls
+    │   ├── manage.py
+    │   └── requirements.txt
+    └── frontend/
+        ├── src/
+        │   ├── api/         # axios calls to backend
+        │   ├── components/  # RuleCard component
+        │   └── pages/       # LoginPage and Dashboard
+        └── package.json
+        
 ## How to run locally
 
 ### Backend
