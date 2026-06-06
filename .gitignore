@@ -29,3 +29,4 @@ dist/
 # Windows
 Thumbs.db
 Desktop.ini
+backend/.env
