@@ -78,15 +78,23 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS - allow react dev server
+# CORS - allow react frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://sf-validation-manager-tau.vercel.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
-
-# Session config
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 3600
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-sf-access-token',
+    'x-sf-instance-url',
+]
