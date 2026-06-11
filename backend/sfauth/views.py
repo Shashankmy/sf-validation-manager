@@ -15,9 +15,11 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 
 def login(request):
-    # redirect user to salesforce oauth login page
+    # using login.salesforce.com so any salesforce account can login
+    # not just our specific org
+    base_url = "https://login.salesforce.com"
     auth_url = (
-        f"{SF_DOMAIN}/services/oauth2/authorize"
+        f"{base_url}/services/oauth2/authorize"
         f"?response_type=code"
         f"&client_id={SF_CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
@@ -36,7 +38,7 @@ def callback(request):
     if not code:
         return redirect(f"{FRONTEND_URL}?error=no_code_returned")
 
-    token_url = f"{SF_DOMAIN}/services/oauth2/token"
+    token_url = "https://login.salesforce.com/services/oauth2/token"
     payload = {
         'grant_type': 'authorization_code',
         'client_id': SF_CLIENT_ID,
